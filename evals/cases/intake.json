@@ -1,0 +1,60 @@
+[
+  {
+    "id": "jewelry-store",
+    "description": "An online store for handmade jewelry. Busy around holidays. We're two developers, must stay on AWS and under $800/month, pages should feel instant.",
+    "expect": {"app_type": "ecommerce", "cloud_preference": "aws", "cloud_required": true, "monthly_budget_usd": 800,
+               "team_size": 2, "growth_pattern": "seasonal", "response_time": "milliseconds", "traffic_known": false},
+    "forbid_set": ["requests_per_day", "peak_rps"]
+  },
+  {
+    "id": "mobile-api-known-traffic",
+    "description": "REST API for our mobile app, about 200,000 requests per day, budget $300 a month, we have no devops people.",
+    "expect": {"app_type": "rest_api", "traffic_known": true, "requests_per_day": 200000, "monthly_budget_usd": 300, "team_size": 0}
+  },
+  {
+    "id": "employees-are-not-requests",
+    "description": "Internal HR tool used 9 to 5 by 500 employees. Occasional downtime is fine and responses within a few seconds are fine. One engineer maintains it, no cloud preference, budget $150.",
+    "expect": {"cloud_preference": "none", "response_time": "seconds", "downtime_tolerance": "occasional", "team_size": 1,
+               "monthly_budget_usd": 150, "traffic_known": false},
+    "forbid_set": ["requests_per_day", "peak_rps"],
+    "note": "500 employees is a user count, not a request volume: inventing one is a hallucination."
+  },
+  {
+    "id": "azure-never-down",
+    "description": "Subscription SaaS on Azure with steady growth. We can never be down. Six engineers, $5000 a month, customers in the US and Europe.",
+    "expect": {"cloud_preference": "azure", "downtime_tolerance": "never", "growth_pattern": "steady", "team_size": 6,
+               "monthly_budget_usd": 5000, "global_users": true, "traffic_known": false},
+    "forbid_set": ["requests_per_day"]
+  },
+  {
+    "id": "soft-budget-gcp",
+    "description": "We run on GCP. Budget is around $2000 a month but that is a soft target, not a hard limit.",
+    "expect": {"cloud_preference": "gcp", "monthly_budget_usd": 2000, "budget_is_hard": false}
+  },
+  {
+    "id": "no-information",
+    "description": "A web app.",
+    "expect": {"traffic_known": false},
+    "forbid_set": ["requests_per_day", "peak_rps"],
+    "note": "Nothing stated: the model must not invent traffic."
+  },
+  {
+    "id": "big-store-open-cloud",
+    "description": "Storefront that handles about 2 million requests per day. We prefer AWS but are open to other clouds if they are cheaper.",
+    "expect": {"app_type": "ecommerce", "cloud_preference": "aws", "cloud_required": false, "traffic_known": true,
+               "requests_per_day": 2000000}
+  },
+  {
+    "id": "payments-api",
+    "description": "Payments API. It must respond in milliseconds and never go down. A platform team of 10 engineers runs it. Hard budget limit of $20000 per month.",
+    "expect": {"app_type": "rest_api", "response_time": "milliseconds", "downtime_tolerance": "never", "team_size": 10,
+               "monthly_budget_usd": 20000, "budget_is_hard": true, "traffic_known": false},
+    "forbid_set": ["requests_per_day"]
+  },
+  {
+    "id": "new-startup-batch-ish",
+    "description": "We are a brand new startup building a REST API for a note-taking app. Just me as the developer, spending no more than $100 a month.",
+    "expect": {"app_type": "rest_api", "growth_pattern": "new_startup", "team_size": 1, "monthly_budget_usd": 100, "traffic_known": false},
+    "forbid_set": ["requests_per_day"]
+  }
+]

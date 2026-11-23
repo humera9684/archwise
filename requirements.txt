@@ -1,0 +1,17 @@
+# Core engine
+pydantic>=2.7
+pandas>=2.0
+python-dotenv>=1.0
+# API
+fastapi>=0.110
+uvicorn>=0.29
+httpx>=0.27
+# Pricing ETL + PostgreSQL
+psycopg[binary]>=3.1
+ijson>=3.2
+pyyaml>=6.0
+# LLM clients: openai covers Ollama, Hugging Face, OpenAI and Gemini
+openai>=1.40
+anthropic>=0.40   # optional: only needed for Claude
+# Dev
+pytest>=8.0

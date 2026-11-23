@@ -1,0 +1,58 @@
+# ArchWise: UI + API + PostgreSQL + scheduled AWS pricing ETL.
+#   docker compose up --build            -> http://localhost:8080 (UI), http://localhost:8000/docs (API)
+#   docker compose --profile ollama up   -> also runs Ollama in a container (CPU only on Windows/macOS)
+x-db-url: &db_url postgresql://archwise:archwise@db:5432/archwise
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: archwise
+      POSTGRES_PASSWORD: archwise
+      POSTGRES_DB: archwise
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archwise"]
+      interval: 5s
+      retries: 20
+
+  api:
+    build: .
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    env_file: [{path: .env, required: false}]
+    environment:
+      DATABASE_URL: *db_url
+      # Ollama running natively on your machine (recommended: it can use your GPU)
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+      ARCHWISE_CORS_ORIGINS: http://localhost:8080,http://localhost:5173
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+
+  web:
+    build: ./web
+    ports: ["8080:80"]
+    depends_on: [api]
+
+  pricing-etl:
+    build: .
+    command: python -m pricing_etl schedule --every-hours ${ARCHWISE_REFRESH_HOURS:-24}
+    environment:
+      DATABASE_URL: *db_url
+      ARCHWISE_DATA_DIR: /data/raw
+    volumes: [rawprices:/data/raw]
+    depends_on:
+      db: {condition: service_healthy}
+
+  ollama:
+    image: ollama/ollama
+    profiles: ["ollama"]
+    ports: ["11434:11434"]
+    volumes: [ollama:/root/.ollama]
+
+volumes:
+  pgdata:
+  rawprices:
+  ollama:

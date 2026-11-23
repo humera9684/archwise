@@ -1,0 +1,27 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.streamlit/secrets.toml
+data/
+.cache/
+evals/reports/
+
+# secrets and local config: never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# dependencies, builds, caches, local reports
+.venv/
+venv/
+node_modules/
+web/dist/
+.pytest_cache/
+.cache/
+evals/reports/
+*.log

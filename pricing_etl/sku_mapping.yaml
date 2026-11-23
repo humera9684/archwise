@@ -1,0 +1,209 @@
+# Maps ArchWise engine price keys to AWS Price List products (PRD §7, ETL-04).
+#
+# The engine prices architectures with keys like "fn_per_gb_second". Each entry
+# below says which AWS offer file holds that price and how to find the product:
+#
+#   offer:      AWS offer code (one bulk price file per offer and region)
+#   match:      exact attribute matches (productFamily is the product's family,
+#               everything else is under product.attributes)
+#   usagetype:  regular expression for the usagetype attribute (us-east-1 usage
+#               types usually have no region prefix; "USE1-" is allowed too)
+#   unit:       expected billing unit (case-insensitive); a mismatch rejects the key
+#   tier:       first          -> the lowest tier (beginRange 0)
+#               first_nonzero  -> the first tier with a non-zero price (skips free tiers)
+#   multiply:   converts the AWS unit to the engine unit (e.g. per request -> per million)
+#   required:   counted in coverage; optional keys fall back to approximate silently
+#
+# for_each expands one entry into several keys (instance types).
+#
+# VERIFY ON FIRST LIVE RUN: attribute names and values below follow the AWS
+# Price List format but were authored without live access. `python -m
+# pricing_etl refresh` prints every key that matched nothing or was ambiguous;
+# adjust the match/usagetype here, re-run, and the fix is versioned with git.
+
+version: 1
+provider: aws
+region: us-east-1
+offers_base_url: https://pricing.us-east-1.amazonaws.com
+min_required_coverage: 0.5     # publish only if at least half the required keys are sourced
+max_change_ratio: 0.5          # block publish if a rate moves more than 50% vs the last snapshot
+
+keys:
+  # ---- AWS Lambda ---------------------------------------------------------
+  fn_per_million_requests:
+    offer: AWSLambda
+    match: {productFamily: Serverless, group: AWS-Lambda-Requests}
+    usagetype: '^(USE1-)?Request$'
+    unit: Requests
+    tier: first
+    multiply: 1000000
+    engine_unit: USD per million requests
+  fn_per_gb_second:
+    offer: AWSLambda
+    match: {productFamily: Serverless, group: AWS-Lambda-Duration}
+    usagetype: '^(USE1-)?Lambda-GB-Second$'
+    unit: Lambda-GB-Second
+    tier: first
+    engine_unit: USD per GB-second
+  fn_provisioned_per_gb_second:
+    offer: AWSLambda
+    match: {productFamily: Serverless, group: AWS-Lambda-Provisioned-Concurrency}
+    usagetype: '^(USE1-)?Lambda-Provisioned-Concurrency$'
+    unit: Lambda-GB-Second
+    tier: first
+    engine_unit: USD per GB-second (provisioned, idle)
+
+  # ---- API Gateway (HTTP APIs) ----------------------------------------------
+  api_per_million_requests:
+    offer: AmazonApiGateway
+    match: {productFamily: API Calls, operation: ApiGatewayHttpApi}
+    usagetype: '^(USE1-)?ApiGatewayHttpRequest$'
+    unit: Requests
+    tier: first
+    multiply: 1000000
+    engine_unit: USD per million requests
+
+  # ---- ECS on Fargate (Linux/x86) ---------------------------------------------
+  ctr_vcpu_hour:
+    offer: AmazonECS
+    match: {productFamily: Compute}
+    usagetype: '^(USE1-)?Fargate-vCPU-Hours:perCPU$'
+    unit: hours
+    tier: first
+    engine_unit: USD per vCPU-hour
+  ctr_gb_hour:
+    offer: AmazonECS
+    match: {productFamily: Compute}
+    usagetype: '^(USE1-)?Fargate-GB-Hours$'
+    unit: hours
+    tier: first
+    engine_unit: USD per GB-hour
+
+  # ---- Application Load Balancer ------------------------------------------------
+  lb_hour:
+    offer: AWSELB
+    match: {productFamily: Load Balancer-Application}
+    usagetype: '^(USE1-)?LoadBalancerUsage$'
+    unit: Hrs
+    tier: first
+    engine_unit: USD per hour
+  lb_capacity_unit_hour:
+    offer: AWSELB
+    match: {productFamily: Load Balancer-Application}
+    usagetype: '^(USE1-)?LCUUsage$'
+    unit: LCU-Hrs
+    tier: first
+    engine_unit: USD per LCU-hour
+
+  # ---- EKS --------------------------------------------------------------------------
+  k8s_cluster_hour:
+    offer: AmazonEKS
+    match: {}
+    usagetype: '^(USE1-)?AmazonEKS-Hours:perCluster$'
+    unit: Hours
+    tier: first
+    engine_unit: USD per cluster-hour
+
+  # ---- EC2 on-demand, Linux, shared tenancy -------------------------------------------
+  'vm_types[{type}]':
+    for_each: {type: [t3.medium, m6i.large, m6i.xlarge, m6i.2xlarge]}
+    offer: AmazonEC2
+    match:
+      productFamily: Compute Instance
+      instanceType: '{type}'
+      operatingSystem: Linux
+      tenancy: Shared
+      preInstalledSw: NA
+      capacitystatus: Used
+    usagetype: '^(USE1-)?BoxUsage:{type}$'
+    unit: Hrs
+    tier: first
+    engine_unit: USD per instance-hour
+
+  # ---- RDS for PostgreSQL, Single-AZ (engine doubles for Multi-AZ) -----------------------
+  'rdb_tiers[{type}]':
+    for_each: {type: [db.t4g.medium, db.m6g.large, db.m6g.xlarge, db.m6g.2xlarge, db.m6g.4xlarge]}
+    offer: AmazonRDS
+    match:
+      productFamily: Database Instance
+      instanceType: '{type}'
+      databaseEngine: PostgreSQL
+      deploymentOption: Single-AZ
+    usagetype: '^(USE1-)?InstanceUsage:{type}$'
+    unit: Hrs
+    tier: first
+    engine_unit: USD per instance-hour
+  rdb_storage_gb_month:
+    offer: AmazonRDS
+    match: {productFamily: Database Storage, databaseEngine: PostgreSQL, deploymentOption: Single-AZ,
+            volumeType: General Purpose-GP3}
+    usagetype: '^(USE1-)?RDS:GP3-Storage$'
+    unit: GB-Mo
+    tier: first
+    engine_unit: USD per GB-month
+  rds_proxy_vcpu_hour:
+    offer: AmazonRDS
+    match: {productFamily: RDS Proxy, databaseEngine: PostgreSQL}
+    usagetype: '^(USE1-)?RDS:ProxyUsage$'
+    unit: vCPU-Hr
+    tier: first
+    required: false
+    engine_unit: USD per DB vCPU-hour
+
+  # ---- DynamoDB on-demand ---------------------------------------------------------------
+  kv_per_million_reads:
+    offer: AmazonDynamoDB
+    match: {productFamily: Amazon DynamoDB PayPerRequest Throughput, group: DDB-ReadUnits}
+    usagetype: '^(USE1-)?ReadRequestUnits$'
+    unit: ReadRequestUnits
+    tier: first
+    multiply: 1000000
+    engine_unit: USD per million reads
+  kv_per_million_writes:
+    offer: AmazonDynamoDB
+    match: {productFamily: Amazon DynamoDB PayPerRequest Throughput, group: DDB-WriteUnits}
+    usagetype: '^(USE1-)?WriteRequestUnits$'
+    unit: WriteRequestUnits
+    tier: first
+    multiply: 1000000
+    engine_unit: USD per million writes
+  kv_storage_gb_month:
+    offer: AmazonDynamoDB
+    match: {productFamily: Database Storage}
+    usagetype: '^(USE1-)?TimedStorage-ByteHrs$'
+    unit: GB-Mo
+    tier: first_nonzero
+    engine_unit: USD per GB-month
+
+  # ---- ElastiCache ------------------------------------------------------------------------
+  cache_node_hour:
+    offer: AmazonElastiCache
+    match: {productFamily: Cache Instance, instanceType: cache.t4g.small, cacheEngine: Redis}
+    usagetype: '^(USE1-)?NodeUsage:cache.t4g.small$'
+    unit: Hrs
+    tier: first
+    engine_unit: USD per node-hour
+
+  # ---- S3 Standard and data transfer ----------------------------------------------------------
+  obj_gb_month:
+    offer: AmazonS3
+    match: {productFamily: Storage, volumeType: Standard}
+    usagetype: '^(USE1-)?TimedStorage-ByteHrs$'
+    unit: GB-Mo
+    tier: first
+    engine_unit: USD per GB-month
+  egress_gb:
+    offer: AWSDataTransfer
+    match: {productFamily: Data Transfer, transferType: AWS Outbound, toLocation: External}
+    usagetype: '^(USE1-)?DataTransfer-Out-Bytes$'
+    unit: GB
+    tier: first_nonzero
+    engine_unit: USD per GB
+  cdn_gb:
+    offer: AmazonCloudFront
+    match: {productFamily: Data Transfer, transferType: CloudFront Outbound, fromLocation: United States}
+    usagetype: '^US-DataTransfer-Out-Bytes$'
+    unit: GB
+    tier: first
+    required: false
+    engine_unit: USD per GB

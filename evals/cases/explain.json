@@ -1,0 +1,6 @@
+[
+  {"id": "unknown-traffic-ecommerce", "intake": {"app_type": "ecommerce", "cloud_preference": "aws", "growth_pattern": "seasonal"}},
+  {"id": "known-traffic-api", "intake": {"app_type": "rest_api", "traffic_known": true, "requests_per_day": 50000}},
+  {"id": "global-never-down", "intake": {"app_type": "ecommerce", "global_users": true, "downtime_tolerance": "never", "monthly_budget_usd": 3000}},
+  {"id": "infeasible-budget", "intake": {"app_type": "ecommerce", "traffic_known": true, "requests_per_day": 5000000, "monthly_budget_usd": 50}}
+]

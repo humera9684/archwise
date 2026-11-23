@@ -1,0 +1,22 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: archwise, POSTGRES_PASSWORD: archwise, POSTGRES_DB: archwise_test}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U archwise" --health-interval 5s --health-retries 20
+    env:
+      ARCHWISE_TEST_DATABASE_URL: postgresql://archwise:archwise@localhost:5432/archwise_test
+      LLM_PROVIDER: template
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r requirements.txt
+      - run: pytest -q
+      - run: python -m evals --suite guardrail   # deterministic: no LLM needed

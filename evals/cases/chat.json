@@ -1,0 +1,61 @@
+[
+  {
+    "id": "europe-and-four-nines",
+    "message": "What happens if I expand to Europe and require 99.99% availability?",
+    "expect": {"global_users": true, "overrides.availability_target": 99.99}
+  },
+  {
+    "id": "cut-budget",
+    "message": "Cut the budget to $500.",
+    "start": {"cloud_preference": "aws", "team_size": 3},
+    "expect": {"monthly_budget_usd": 500},
+    "unchanged": ["cloud_preference", "team_size"]
+  },
+  {
+    "id": "team-grows",
+    "message": "We now have 5 engineers.",
+    "expect": {"team_size": 5}
+  },
+  {
+    "id": "only-google",
+    "message": "We can only use Google Cloud.",
+    "expect": {"cloud_preference": "gcp", "cloud_required": true}
+  },
+  {
+    "id": "soft-budget",
+    "message": "Make the budget a soft target instead of a hard limit.",
+    "start": {"budget_is_hard": true},
+    "expect": {"budget_is_hard": false}
+  },
+  {
+    "id": "stated-traffic",
+    "message": "Actually we get about 300,000 requests a day.",
+    "expect": {"traffic_known": true, "requests_per_day": 300000}
+  },
+  {
+    "id": "vague-spike-asks-question",
+    "message": "I'm launching an e-commerce application and expect a lot of traffic during Black Friday.",
+    "expect": {},
+    "unchanged": ["requests_per_day", "peak_rps", "traffic_known"],
+    "expects_question": true,
+    "note": "No traffic number was given: the model must not invent one, and should ask about the spike."
+  },
+  {
+    "id": "thanks-changes-nothing",
+    "message": "Thanks, that looks great!",
+    "start": {"monthly_budget_usd": 750, "team_size": 4, "cloud_preference": "azure"},
+    "expect": {},
+    "unchanged": ["monthly_budget_usd", "team_size", "cloud_preference", "global_users", "traffic_known"]
+  },
+  {
+    "id": "faster-pages",
+    "message": "Pages must respond in milliseconds.",
+    "start": {"response_time": "seconds"},
+    "expect": {"response_time": "milliseconds"}
+  },
+  {
+    "id": "never-down",
+    "message": "We cannot accept any downtime.",
+    "expect": {"downtime_tolerance": "never"}
+  }
+]
