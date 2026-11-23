@@ -343,4 +343,5 @@ evolution view, event-driven workloads, more regions, live documentation ingesti
 
 ## License
 
-[MIT](LICENSE) © 2026 Humera Nutankalava
+Copyright © 2026 Humera Nutankalava. All rights reserved. The code is publicly visible for viewing
+and evaluation only; it is not open source and may not be reused without permission. See [LICENSE](LICENSE).
