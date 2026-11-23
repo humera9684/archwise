@@ -30,7 +30,7 @@ didn't produce.
 
 Requirements and decisions: [requirements.md](requirements.md) (PRD) · [ROADMAP.md](ROADMAP.md)
 
-![Unknown-traffic scenario comparison](docs/screenshots/scenario-comparison.png)
+![ArchWise React UI: unknown-traffic scenario comparison](docs/screenshots/scenario-comparison.png)
 
 ---
 
@@ -78,7 +78,7 @@ flowchart LR
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-username>/archwise.git && cd archwise
+git clone https://github.com/humera9684/archwise.git && cd archwise
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
