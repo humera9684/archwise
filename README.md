@@ -340,3 +340,7 @@ tests/           pytest suite + AWS-format price fixtures
 
 See [ROADMAP.md](ROADMAP.md). Next: LLM evaluation harness, saved scenario versions and diffs, 12-month
 evolution view, event-driven workloads, more regions, live documentation ingestion.
+
+## License
+
+[MIT](LICENSE) © 2026 Humera Nutankalava
